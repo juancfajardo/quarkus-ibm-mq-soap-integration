@@ -1,0 +1,90 @@
+{
+  "generated_at": "2026-11-26T07:28:40+00:00",
+  "environment": {
+    "machine": "GitHub Actions ubuntu-latest runner, IBM MQ developer container, Java 21",
+    "python": "3.12.16"
+  },
+  "erp_faults": {
+    "failureRate": 0.2,
+    "lostReplyRate": 0.05,
+    "latencyMs": 50
+  },
+  "sync": {
+    "orders": 500,
+    "ok": 389,
+    "failed_for_client": 111,
+    "lost_pct": 22.2,
+    "saved_but_reported_failed": 12,
+    "api_ms_p50": 168.7,
+    "api_ms_p95": 200.0,
+    "api_ms_mean": 182.6,
+    "wall_ms": 5807,
+    "erp": {
+      "calls": 500,
+      "uniqueOrders": 401,
+      "faultsBeforeSave": 99,
+      "faultsAfterSave": 12,
+      "duplicatesAbsorbed": 0,
+      "rejected": 0,
+      "failureRate": 0.2,
+      "lostReplyRate": 0.05,
+      "latencyMs": 50
+    }
+  },
+  "async": {
+    "orders": 2000,
+    "valid": 1900,
+    "invalid": 100,
+    "accepted": 2000,
+    "sent": 1900,
+    "rejected_to_dlq": 100,
+    "failed_to_dlq": 0,
+    "lost": 0,
+    "lost_pct": 0.0,
+    "erp_unique_orders": 1900,
+    "duplicates_in_erp": 0,
+    "duplicate_attempts_absorbed": 97,
+    "erp_calls": 2577,
+    "erp_faults": 577,
+    "redeliveries": 0,
+    "api_ms_p50": 16.4,
+    "api_ms_p95": 28.4,
+    "api_ms_mean": 18.8,
+    "end_to_end_ms_p50": 12712,
+    "end_to_end_ms_p95": 24022,
+    "submit_wall_ms": 2378,
+    "drained_wall_ms": 28429,
+    "throughput_orders_per_s": 68.4,
+    "gateway": {
+      "total": 2000,
+      "byStatus": {
+        "QUEUED": 0,
+        "RETRYING": 0,
+        "SENT": 1900,
+        "REJECTED_TO_DLQ": 100,
+        "FAILED_TO_DLQ": 0,
+        "SYNC_SENT": 0,
+        "SYNC_REJECTED": 0,
+        "SYNC_LOST": 0
+      },
+      "erpCalls": 2577,
+      "redeliveries": 0,
+      "erpReportedDuplicates": 97,
+      "endToEndMsP50": 12712,
+      "endToEndMsP95": 24022,
+      "endToEndMsMax": 25429,
+      "asyncWindowMs": 27785
+    },
+    "erp": {
+      "calls": 2577,
+      "uniqueOrders": 1900,
+      "faultsBeforeSave": 480,
+      "faultsAfterSave": 97,
+      "duplicatesAbsorbed": 97,
+      "rejected": 100,
+      "failureRate": 0.2,
+      "lostReplyRate": 0.05,
+      "latencyMs": 50
+    }
+  }
+}
