@@ -1,0 +1,18 @@
+# IBM MQ developer edition (free for development). Queue manager QM1, channel DEV.APP.SVRCONN,
+# queues DEV.QUEUE.1 (orders) and DEV.DEAD.LETTER.QUEUE. Web console: https://localhost:9443/ibmmq/console (admin)
+services:
+  ibmmq:
+    image: icr.io/ibm-messaging/mq:latest
+    ports:
+      - "1414:1414"
+      - "9443:9443"
+    environment:
+      LICENSE: accept
+      MQ_QMGR_NAME: QM1
+      MQ_APP_PASSWORD: passw0rd      # local demo only
+      MQ_ADMIN_PASSWORD: passw0rd    # local demo only
+    healthcheck:
+      test: ["CMD", "chkmqready"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
