@@ -1,0 +1,113 @@
+name: Integration test
+
+# Builds both Quarkus services, starts them against IBM MQ (developer container),
+# runs the load test against a deliberately flaky ERP and commits the measured results.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "**/src/**"
+      - "**/pom.xml"
+      - "bench/**"
+      - ".github/workflows/integration.yml"
+      - "!**/*.md"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: integration
+  cancel-in-progress: false
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      ibmmq:
+        image: icr.io/ibm-messaging/mq:latest
+        env:
+          LICENSE: accept
+          MQ_QMGR_NAME: QM1
+          MQ_APP_PASSWORD: passw0rd
+          MQ_ADMIN_PASSWORD: passw0rd
+        ports:
+          - 1414:1414
+        options: >-
+          --health-cmd chkmqready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      BENCH_ENV: "GitHub Actions ubuntu-latest runner, IBM MQ developer container, Java 21"
+      MQ_APP_PASSWORD: passw0rd
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build and unit tests
+        run: mvn -B -ntp verify
+
+      - name: Start ERP mock and order gateway
+        run: |
+          nohup java -jar legacy-erp-mock/target/quarkus-app/quarkus-run.jar > erp.log 2>&1 &
+          nohup java -jar order-gateway/target/quarkus-app/quarkus-run.jar > gateway.log 2>&1 &
+          for url in http://localhost:8081/q/health/ready http://localhost:8080/q/health/ready; do
+            for i in $(seq 1 60); do
+              if curl -sf "$url" > /dev/null; then echo "ready: $url"; break; fi
+              sleep 2
+            done
+          done
+          curl -sf http://localhost:8081/soap/orders?wsdl | head -c 300; echo
+
+      - name: Load test
+        id: load
+        continue-on-error: true
+        run: python bench/run_load.py
+
+      - name: Build charts
+        if: always()
+        run: |
+          pip install matplotlib
+          if [ -f results/summary.json ]; then python bench/charts.py; fi
+
+      - name: Upload results and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-results
+          path: |
+            results/
+            docs/cover.png
+            erp.log
+            gateway.log
+
+      - name: Commit results
+        if: steps.load.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results docs
+          if git diff --cached --quiet; then
+            echo "No changes in results"
+          else
+            git commit -m "Update integration results [skip ci]"
+            git push
+          fi
+
+      - name: Fail if the integration lost or duplicated orders
+        if: steps.load.outcome != 'success'
+        run: |
+          echo "--- gateway.log (tail) ---"; tail -n 80 gateway.log || true
+          echo "--- erp.log (tail) ---"; tail -n 40 erp.log || true
+          exit 1
